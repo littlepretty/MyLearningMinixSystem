@@ -1,0 +1,380 @@
+diff -rNU3 dist.orig/bfd/config.bfd dist.nbsd/bfd/config.bfd
+--- dist.orig/bfd/config.bfd	2011-07-29 00:35:13.000000000 +0200
++++ dist.nbsd/bfd/config.bfd	2013-04-08 23:50:35.000000000 +0200
+@@ -523,7 +523,7 @@
+     targ_selvecs=i386bsd_vec
+     targ_underscore=yes
+     ;;
+-  i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu)
++  i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu | i[3-7]86-*-dragonfly*)
+     targ_defvec=bfd_elf32_i386_freebsd_vec
+     targ_selvecs="bfd_elf32_i386_vec i386pei_vec i386coff_vec"
+     targ64_selvecs="bfd_elf64_x86_64_freebsd_vec bfd_elf64_x86_64_vec x86_64pei_vec bfd_elf64_l1om_vec bfd_elf64_l1om_freebsd_vec bfd_elf64_k1om_vec bfd_elf64_k1om_freebsd_vec"
+diff -rNU3 dist.orig/bfd/configure dist.nbsd/bfd/configure
+--- dist.orig/bfd/configure	2011-11-21 12:55:48.000000000 +0100
++++ dist.nbsd/bfd/configure	2013-04-08 23:52:18.000000000 +0200
+@@ -15210,6 +15210,7 @@
+     bfd_elf32_i370_vec)		tb="$tb elf32-i370.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_sol2_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_freebsd_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
++    bfd_elf32_i386_dragonfly_vec) tb="$tb elf32-i386.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_nacl_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_vxworks_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+     bfd_elf32_i386_vec)		tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+@@ -15374,6 +15375,7 @@
+     x86_64coff_vec)		tb="$tb coff-x86_64.lo cofflink.lo"; target_size=64 ;;
+     i386dynix_vec)		tb="$tb i386dynix.lo aout32.lo" ;;
+     i386freebsd_vec)		tb="$tb i386freebsd.lo aout32.lo" ;;
++    i386dragonfly_vec)		tb="$tb i386freebsd.lo aout32.lo" ;;
+     i386linux_vec)		tb="$tb i386linux.lo aout32.lo" ;;
+     i386lynx_aout_vec)		tb="$tb i386lynx.lo lynx-core.lo aout32.lo" ;;
+     i386lynx_coff_vec)		tb="$tb cf-i386lynx.lo cofflink.lo lynx-core.lo" ;;
+@@ -16517,6 +16519,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/bfd/configure.in dist.nbsd/bfd/configure.in
+--- dist.orig/bfd/configure.in	2011-11-21 12:55:46.000000000 +0100
++++ dist.nbsd/bfd/configure.in	2013-04-08 23:50:41.000000000 +0200
+@@ -644,7 +644,7 @@
+ tb=
+ 
+ elf="elf.lo elflink.lo elf-attrs.lo elf-strtab.lo
+-     elf-eh-frame.lo dwarf1.lo"
++     elf-eh-frame.lo dwarf1.lo elf-ifunc.lo"
+ 
+ for vec in $selvecs
+ do
+diff -rNU3 dist.orig/bfd/doc/Makefile.in dist.nbsd/bfd/doc/Makefile.in
+--- dist.orig/bfd/doc/Makefile.in	2011-11-21 12:55:49.000000000 +0100
++++ dist.nbsd/bfd/doc/Makefile.in	2013-04-09 08:17:18.000000000 +0200
+@@ -417,7 +417,9 @@
+ clean-libtool:
+ 	-rm -rf .libs _libs
+ 
+-bfd.info: bfd.texinfo $(bfd_TEXINFOS)
++bfd.info:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_bfd.info: bfd.texinfo $(bfd_TEXINFOS)
+ 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+ 	rm -rf $$backupdir && mkdir $$backupdir && \
+ 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+diff -rNU3 dist.orig/bfd/doc/bfdver.texi dist.nbsd/bfd/doc/bfdver.texi
+--- dist.orig/bfd/doc/bfdver.texi	2011-11-21 12:58:21.000000000 +0100
++++ dist.nbsd/bfd/doc/bfdver.texi	2013-04-09 08:03:49.000000000 +0200
+@@ -1,4 +1,4 @@
+ @set VERSION 2.22
+-@set VERSION_PACKAGE (GNU Binutils) 
++@set VERSION_PACKAGE (GNU Binutils)\ 
+ @set UPDATED November 2011
+ @set BUGURL @uref{http://www.sourceware.org/bugzilla/}
+diff -rNU3 dist.orig/binutils/configure dist.nbsd/binutils/configure
+--- dist.orig/binutils/configure	2011-05-31 10:54:47.000000000 +0200
++++ dist.nbsd/binutils/configure	2013-04-08 23:29:28.000000000 +0200
+@@ -14672,6 +14672,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/binutils/doc/Makefile.am dist.nbsd/binutils/doc/Makefile.am
+--- dist.orig/binutils/doc/Makefile.am	2010-01-06 17:52:14.000000000 +0100
++++ dist.nbsd/binutils/doc/Makefile.am	2013-04-09 08:24:32.000000000 +0200
+@@ -41,112 +41,144 @@
+ 		    -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
+ 
+ # Man page generation from texinfo
+-addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++addr2line.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Daddr2line < $(binutils_TEXI) > addr2line.pod
+ 	-($(POD2MAN) addr2line.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f addr2line.pod
+ 
+-ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++ar.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dar < $(binutils_TEXI) > ar.pod
+ 	-($(POD2MAN) ar.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f ar.pod
+ 
+-dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++dlltool.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Ddlltool < $(binutils_TEXI) > dlltool.pod
+ 	-($(POD2MAN) dlltool.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f dlltool.pod
+ 
+-nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++nlmconv.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dnlmconv < $(binutils_TEXI) > nlmconv.pod
+ 	-($(POD2MAN) nlmconv.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f nlmconv.pod
+ 
+-nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++nm.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dnm < $(binutils_TEXI) > nm.pod
+ 	-($(POD2MAN) nm.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f nm.pod
+ 
+-objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++objcopy.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dobjcopy < $(binutils_TEXI) > objcopy.pod
+ 	-($(POD2MAN) objcopy.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f objcopy.pod
+ 
+-objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++objdump.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dobjdump < $(binutils_TEXI) > objdump.pod
+ 	-($(POD2MAN) objdump.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f objdump.pod
+ 
+-ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++ranlib.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dranlib < $(binutils_TEXI) > ranlib.pod
+ 	-($(POD2MAN) ranlib.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f ranlib.pod
+ 
+-readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++readelf.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dreadelf < $(binutils_TEXI) > readelf.pod
+ 	-($(POD2MAN) readelf.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f readelf.pod
+ 
+-size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++size.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dsize < $(binutils_TEXI) > size.pod
+ 	-($(POD2MAN) size.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f size.pod
+ 
+-strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++strings.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dstrings < $(binutils_TEXI) > strings.pod
+ 	-($(POD2MAN) strings.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f strings.pod
+ 
+-strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++strip.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dstrip < $(binutils_TEXI) > strip.pod
+ 	-($(POD2MAN) strip.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f strip.pod
+ 
+-elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++elfedit.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
+ 	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f elfedit.pod
+ 
+-windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++windres.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dwindres < $(binutils_TEXI) > windres.pod
+ 	-($(POD2MAN) windres.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f windres.pod
+ 
+-windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++windmc.1:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dwindmc < $(binutils_TEXI) > windmc.pod
+ 	-($(POD2MAN) windmc.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+ 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+ 	rm -f windmc.pod
+ 
+-cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
++cxxfilt.man:
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $(binutils_TEXI) > $(DEMANGLER_NAME).pod
+ 	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+diff -rNU3 dist.orig/configure dist.nbsd/configure
+--- dist.orig/configure	2011-08-14 14:28:15.000000000 +0200
++++ dist.nbsd/configure	2013-04-09 08:46:02.000000000 +0200
+@@ -14663,6 +14663,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/etc/configure dist.nbsd/etc/configure
+--- dist.orig/etc/configure	2009-08-22 18:56:38.000000000 +0200
++++ dist.nbsd/etc/configure	2013-04-08 23:29:45.000000000 +0200
+@@ -2409,6 +2409,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/gas/configure dist.nbsd/gas/configure
+--- dist.orig/gas/configure	2011-05-18 11:41:14.000000000 +0200
++++ dist.nbsd/gas/configure	2013-04-08 23:50:57.000000000 +0200
+@@ -14827,6 +14827,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/gas/configure.tgt dist.nbsd/gas/configure.tgt
+--- dist.orig/gas/configure.tgt	2011-06-20 15:23:21.000000000 +0200
++++ dist.nbsd/gas/configure.tgt	2013-04-08 23:50:58.000000000 +0200
+@@ -201,7 +201,8 @@
+   i386-*-freebsd[12].*)			fmt=aout em=386bsd ;;
+   i386-*-freebsd[12])			fmt=aout em=386bsd ;;
+   i386-*-freebsd* \
+-  | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
++  | i386-*-kfreebsd*-gnu \
++  | i386-*-dragonfly*)		fmt=elf em=freebsd ;;
+   i386-*-sysv*)				fmt=coff ;;
+   i386-*-sco3.2v5*coff)			fmt=coff ;;
+   i386-*-isc*)				fmt=coff ;;
+@@ -417,6 +418,7 @@
+   *-*-aout | *-*-scout)			fmt=aout ;;
+   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
+   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
++  *-*-dragonfly*)			fmt=elf em=freebsd ;;
+   *-*-bsd*)				fmt=aout em=sun3 ;;
+   *-*-generic)				fmt=generic ;;
+   *-*-xray | *-*-hms)			fmt=coff ;;
+diff -rNU3 dist.orig/gold/configure dist.nbsd/gold/configure
+--- dist.orig/gold/configure	2011-09-14 03:29:01.000000000 +0200
++++ dist.nbsd/gold/configure	2013-04-08 23:32:19.000000000 +0200
+@@ -7999,6 +7999,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/gprof/configure dist.nbsd/gprof/configure
+--- dist.orig/gprof/configure	2011-03-30 17:23:20.000000000 +0200
++++ dist.nbsd/gprof/configure	2013-04-08 23:32:50.000000000 +0200
+@@ -12700,6 +12700,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/intl/configure dist.nbsd/intl/configure
+--- dist.orig/intl/configure	2010-09-27 22:22:53.000000000 +0200
++++ dist.nbsd/intl/configure	2013-04-08 23:33:07.000000000 +0200
+@@ -7182,6 +7182,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/ld/configure dist.nbsd/ld/configure
+--- dist.orig/ld/configure	2011-03-28 12:27:07.000000000 +0200
++++ dist.nbsd/ld/configure	2013-04-08 23:34:44.000000000 +0200
+@@ -17534,6 +17534,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/libiberty/configure dist.nbsd/libiberty/configure
+--- dist.orig/libiberty/configure	2011-08-22 19:16:25.000000000 +0200
++++ dist.nbsd/libiberty/configure	2013-04-08 23:36:09.000000000 +0200
+@@ -7538,6 +7538,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/opcodes/configure dist.nbsd/opcodes/configure
+--- dist.orig/opcodes/configure	2011-07-24 16:20:13.000000000 +0200
++++ dist.nbsd/opcodes/configure	2013-04-08 23:36:31.000000000 +0200
+@@ -13171,6 +13171,8 @@
+   case $ac_option in
+   # Handling of the options.
+   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
++	: Avoid regenerating within pkgsrc
++	exit 0
+     ac_cs_recheck=: ;;
+   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+     $as_echo "$ac_cs_version"; exit ;;
